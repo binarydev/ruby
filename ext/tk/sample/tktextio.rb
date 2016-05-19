@@ -445,6 +445,23 @@ class TkTextIO < TkText
     fail IOError, "closed stream" if !@open[:w]
   end
   private :_check_readable, :_check_writable
+  
+  def detect_line_ending_type
+    _check_readable
+    recent_chars = [nil, nil, nil]
+    self.each_char do |char|
+      recent_chars.shift
+      recent_chars << char
+      if recent_chars.first != "\\" && recent_chars.second == "\r" && recent_chars.third == "\n"
+        return "\r\n"
+      elsif recent_chars.second != "\\" && recent_chars.third == "\n"
+        return "\n"
+      elsif recent_chars.first != "\\" && recent_chars.second == "\r"
+        return "\r"
+      end
+    end
+    return $/
+  end
 
   def each_line(rs = $/)
     _check_readable
